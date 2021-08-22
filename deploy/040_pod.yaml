@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-annotator-example
+spec:
+  serviceAccountName: pod-annotator
+  containers:
+    - name: my-app
+      image: k8s.gcr.io/busybox
+      command: ["sh", "-c"]
+      args:
+      - i=0; while true; do
+          echo -n 'healthy' > /annotations/status;
+          i=$((i+1));
+          echo -n $i > /annotations/cycle;
+          echo cycle $i;
+          sleep 15;
+        done;
+      volumeMounts:
+        - name: annotations
+          mountPath: /annotations
+    - name: annotator-sidecar
+      image: docker.io/gvitzi/pod-annotator
+      command: ["pod-annotator"]
+      args:
+        - "-v=5"
+        - "--dir-path=/annotations"
+        - "--prefix=my.app.com/"
+      env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+      volumeMounts:
+        - name: annotations
+          mountPath: /annotations
+  volumes:
+    - name: annotations
+      emptyDir: {}
