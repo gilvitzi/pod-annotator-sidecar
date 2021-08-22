@@ -1,0 +1,5 @@
+.vscode/
+.annotations-test/
+
+pod-annotator
+pod-annotator-sidecar
